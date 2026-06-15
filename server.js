@@ -10,14 +10,19 @@ if (!GEMINI_API_KEY) {
   process.exit(1);
 }
 
-app.use(cors());
+// Autorise toutes les origines (Netlify, localhost, etc.)
+app.use(cors({
+  origin: "*",
+  methods: ["GET", "POST", "OPTIONS"],
+  allowedHeaders: ["Content-Type"],
+}));
+
 app.use(express.json());
 
 app.get("/", (req, res) => {
   res.json({ status: "DropRadar backend OK 🚀" });
 });
 
-// Proxy vers l'API Gemini avec Google Search grounding (gratuit)
 app.post("/api/search", async (req, res) => {
   const { prompt } = req.body;
   if (!prompt) return res.status(400).json({ error: "prompt manquant" });
@@ -46,7 +51,6 @@ app.post("/api/search", async (req, res) => {
       return res.status(response.status).json({ error: data.error?.message || "Erreur Gemini" });
     }
 
-    // Extraire le texte de la réponse Gemini
     const text = data.candidates?.[0]?.content?.parts
       ?.filter(p => p.text)
       ?.map(p => p.text)
